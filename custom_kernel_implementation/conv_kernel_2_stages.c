@@ -5,10 +5,10 @@
  * * Description  : This is the wrapper file for two kernel stages. It contains
  *                  all the initializations and instantiating the two stage kernels 
  * */
-
 #include <immintrin.h>
 #include <stdio.h>
 #include <math.h>
+#include "get_img_rc.h"
 #include "conv.c"
 #include "conv2.c"
 
@@ -32,9 +32,10 @@ __m256d main() {
     char ch;
     int s = 0;
 
+
     // Allocate memory for input image
+    get_rows_n_columns(); 
     a = (float*)malloc(sizeof(float)*in_r*in_c);
-    
     int out_r = in_r - 2;
 
     // Allocate memory for temp and result array memory location
@@ -71,14 +72,21 @@ __m256d main() {
     int flag;
     char* token;
     char *line = NULL;
-    size_t len = in_c * 10 + 10;
+    //size_t len = in_c * 10 + 10;
+    size_t len = 0;
+    printf("size of len=%d\n", len);
     int line_row = 0;
     int line_col = 0;
+    int counter = 0;
     int pixel;
+
+
     
     //Parse pixel values from text.csv file
     while (getline(&line, &len, fp) != -1) {
         token = strtok(line, ",");
+        //counter++;
+        //printf("I am here %d times\n", counter); 
         while (token != NULL) {
             pixel = atoi(token);
             a[line_row*in_c + line_col] = pixel;
@@ -90,6 +98,8 @@ __m256d main() {
         line_col = 0;
     }
     fclose(fp);
+    //printf("[aeega]: line_rows = %d\n", in_r);
+    //printf("[aeega]: line_cols = %d\n", in_c);
     
 
     theo_st = rdtsc();
@@ -116,10 +126,9 @@ __m256d main() {
                                       (theo_result[(x + 2)*in_c + y] * fy[6]) + (theo_result[(x + 2)*in_c + y + 1] * fy[7]) + (theo_result[(x + 2)*in_c + y + 2] * fy[8]);
         }
     } 
-    theo_et = rdtsc();
-    theo_et = rdtsc();
+    theo_et = rdtsc()-theo_st;
 
-    printf("Theoretical time taken: %lld\n", theo_et - theo_st);
+    printf("Theoretical time taken: %lld\n", theo_et);
 
 
     st = rdtsc();
@@ -132,11 +141,14 @@ __m256d main() {
     et = rdtsc() - st;
 
     printf("Observed avg time taken over 1000 iter Total: %lld\n", ((et)/1000));
+    printf("Improvement = %f\n", (float)theo_et*1000/(float)et);
 
 
     fpo = fopen("./output.csv", "w+");
     fpto = fopen("./output_theo.csv", "w+");
     char* out_str = malloc(sizeof(int)*20);
+
+    // Dump the stage 1 outputs into csv files to display the images
     for (int i = 0 ; i < out_r ; i++) {
         for (int j = 0 ; j < out_c ; j ++) {
             //printf("%lf ", result[i*out_c + j]);
@@ -152,7 +164,7 @@ __m256d main() {
                 fputs(out_str, fpto);
             }
             if (theo_result[i*out_c + j] != result[i*out_c + j]) {
-                printf("Error found in 1st stage at index : %d. %d\n", i, j);
+                //printf("Error found in 1st stage at index : %d. %d\n", i, j);
             }
         }
         fputc('\n',fpo);
@@ -161,6 +173,8 @@ __m256d main() {
     }
     fclose(fpo);
     fclose(fpto);
+
+    // Dump the stage 2 outputs into csv files to display the images
     fpox = fopen("./outputx.csv", "w+");
     fpoy = fopen("./outputy.csv", "w+");
     fptox = fopen("./output_theox.csv", "w+");

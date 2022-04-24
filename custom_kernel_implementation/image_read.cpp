@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
         }
     }*/
 
-    cout << "Num rows " << image2.rows << "    Num columns " << image2.cols << endl; 
+    cout << "Num rows " << image2.rows << "    Num columns " << image2.cols << endl;
 //    imshow("Threshold", image3);
     const char* filename = "test.csv";
     ofstream myfile;

@@ -20,19 +20,15 @@ __asm__ __volatile__( \
  [xsrc2] "x"(src2) \
 );
 
-#define NUM_ROWS 480
-#define NUM_COLS 737
 #define NUM_COLS_IN_ONE_PANEL 256
+
+int num_c = NUM_COLS_IN_ONE_PANEL;
 
 __m256 r[3];         // 3 rows loaded column wise
 __m256 out0, out1, out2, out3, out4, out5, out6, out7, out8, out9;       // 10 independant FMA chains
 __m256 k0, k1, k2;   // broadcasted values for each row of kernel
 
 
-    int in_r = NUM_ROWS;
-    int in_c = NUM_COLS;
-    int out_c = NUM_COLS;
-    int num_c = NUM_COLS_IN_ONE_PANEL; //512
 
 /*@brief: conv function is for implementing first stage of the CED aglorithm. 
 * Function arguments:
@@ -44,7 +40,6 @@ __m256 k0, k1, k2;   // broadcasted values for each row of kernel
 */
 
 void conv (float *a , float kernel[9], int rows, float *result, float *temp) {
-
     double in_col = (double)in_c;
     double num_pan = ceil(in_col/num_c);
     int num_panels = (int)num_pan;
