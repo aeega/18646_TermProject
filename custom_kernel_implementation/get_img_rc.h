@@ -1,8 +1,16 @@
 #include <stdio.h>
 
 void get_rows_n_columns();
+unsigned long long rdtsc();
 
 int in_c, in_r, out_c;
+
+unsigned long long rdtsc() {   
+    unsigned long long int x;   
+    unsigned a, d;   
+    __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
+    return ((unsigned long long)a) | (((unsigned long long)d) << 32); 
+}
 
 void get_rows_n_columns() {
     char* token1;

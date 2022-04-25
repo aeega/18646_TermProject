@@ -4,6 +4,9 @@
  * * Created on   : Apr 05, 2022
  * * Description  : This is the 2st stage kernel design 
  * */
+#include "time.h"
+#define likely(x)       __builtin_expect((x),1)
+#define unlikely(x)     __builtin_expect((x),0)
 
 __m256 r[3];         // 3 rows loaded column wise
 __m256 out0, out1, out2, out3, out4, out5, out6, out7, out8, out9;       // 10 independant FMA chains
@@ -19,7 +22,7 @@ __m256 k0, k1, k2;   // broadcasted values for each row of sobel_x
 *  result_y-> Output image matrix -> windowImagey_ij sructure in openCV implementation
 *  temp_*  -> Temporary variables used to store the data while calculating result_x and result_y
 */
-void conv2 (float *a , float sobel_x[9], float sobel_y[9], int rows, float *result_x, float *result_y, float *temp_x, float *temp_y) {
+void conv2 (float *a , float sobel_x[9], float sobel_y[9], int rows, int cols, float *result_x, float *result_y, float *D, float *Theta, float *temp_x, float *temp_y) {
 
     double in_col = (double)in_c;
     double num_pan = ceil(in_col/num_c);
@@ -385,4 +388,41 @@ void conv2 (float *a , float sobel_x[9], float sobel_y[9], int rows, float *resu
            }
         }
     }
+
+    // Calculate the D and Theta matrix -> Gradient and angle vector equivalents,
+    // but as a 1D array.
+    int in0 = 0;
+    int in45 = 0;
+    int in90 = 0;
+    int in135 = 0;
+    long long int st2 = 0, et2 = 0;
+    for (int k = 0; k < (rows*cols); k++) {
+        //Gradient
+        D[k] = hypot(result_x[k], result_y[k]);
+        //printf("D[%d]=%f\n", k, D[k]);
+    
+        // Theta
+        result_y[k] ? (Theta[k] = atan(result_y[k]/result_x[k])) : (Theta[k] = 90);
+        // Unlikely to happen. 
+        if(unlikely(Theta[k] > 180)) {
+            Theta[k] -= 180;
+        }
+        if (Theta[k] < 0){
+            Theta[k] += 180;
+        }
+        if(likely((Theta[k] <= 22.5) || (Theta[k] >= 157.5))) {
+            Theta[k] = 0;
+            //in0++;
+        } else if((Theta[k] > 22.5) && (Theta[k] <= 67.5)) {
+            Theta[k] = 45;
+            //in45++;
+        } else if((Theta[k] != 90) && (Theta[k] > 67.5) && (Theta[k] <= 112.5)) {
+            Theta[k] = 90;
+        } else if((Theta[k] > 112.5) && (Theta[k] < 157.5)) {
+            Theta[k] = 135;
+            //in135++;
+        }
+    }
+    //printf("in0 = %d, in45 = %d, in90 = %d, in135 = %d\n", in0, in45, in90, in135);
+    //printf("total time in conv2 = %llf\n", et2);
 }

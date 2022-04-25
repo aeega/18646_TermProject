@@ -11,23 +11,24 @@
 #include "get_img_rc.h"
 #include "conv.c"
 #include "conv2.c"
+#include "ced_stages345.c"
 
-unsigned long long rdtsc() {   
-    unsigned long long int x;   
-    unsigned a, d;   
-    __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
-    return ((unsigned long long)a) | (((unsigned long long)d) << 32); 
-}
+//unsigned long long rdtsc() {   
+//    unsigned long long int x;   
+//    unsigned a, d;   
+//    __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
+//    return ((unsigned long long)a) | (((unsigned long long)d) << 32); 
+//}
 
 __m256d main() {
 
-    float *a, *result, *resultx, *resulty, *resultx_ae, *resulty_ae, *theo_result, *theo_resultx, *theo_resulty;
+    float *a, *result, *result_x, *result_y, *D, **D_new, **D_new_temp, *Theta, **theta_new_temp, **thresh, **dest, *resultx_ae, *resulty_ae, *theo_result, *theo_resultx, *theo_resulty, *dest_1D;
     unsigned long long theo_st, theo_et, st, et;
     int i, j;
 
     // Extract num rows and cols 
     char *str = (char*)malloc(20* sizeof(char));
-    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy;
+    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy, *fptotheta, *fptothetanewtemp, *fptodnew, *fptodnewtemp, *fptodest;
     fp = fopen("./test.csv", "r");
     char ch;
     int s = 0;
@@ -43,10 +44,25 @@ __m256d main() {
     float *tempx = (float*)malloc(sizeof(float)*2*num_c);
     float *tempy = (float*)malloc(sizeof(float)*2*num_c);
     result = (float*)malloc(sizeof(float)*out_r*out_c);
-    resultx = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    resulty = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    resultx_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    resulty_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    result_x = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    result_y = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    D_new = malloc(out_c *sizeof(float *));
+    D_new_temp = malloc(out_c *sizeof(float *));
+    theta_new_temp = malloc(out_c *sizeof(float *));
+    thresh = malloc(out_c *sizeof(float *));
+    dest = malloc(out_c *sizeof(float *));
+    dest_1D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    for (int i=0;i<out_c;i++) {
+        D_new[i] = malloc((out_r-2)*sizeof(float));
+        D_new_temp[i] = malloc((out_r-2)*sizeof(float));
+        theta_new_temp[i] = malloc((out_r-2)*sizeof(float));
+        thresh[i] = malloc((out_r-2)*sizeof(float));
+        dest[i] = malloc((out_r-2)*sizeof(float));
+    }
+    Theta = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    //resultx_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    //resulty_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     theo_result = (float*)malloc(sizeof(float)*out_r*out_c);
     theo_resultx = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     theo_resulty = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
@@ -134,11 +150,19 @@ __m256d main() {
     st = rdtsc();
 
    // Custom kernel implementation 
-    for(int i = 0; i < 1000; i++ ) {
+    for(int i = 0; i < 1; i++ ) {
         conv (a, f, in_r-2, result, temp); 
-        conv2 (result, fx, fy, in_r-4, resultx, resulty, tempx, tempy);
+        conv2 (result, fx, fy, in_r-4, out_c, result_x, result_y, D, Theta, tempx, tempy);
+        ced_stages345(dest, D_new, D_new_temp, D, thresh, theta_new_temp, Theta, in_r-4, out_c);
     }
     et = rdtsc() - st;
+    
+    // Convert the dest[][] to dest_1D[] to print the image
+    for(int i = 0; i < (out_r-2); i++) {
+        for(int j = 0; j < out_c; j++) {
+            dest_1D[i*out_c+j] = dest[i][j];
+        }
+    }
 
     printf("Observed avg time taken over 1000 iter Total: %lld\n", ((et)/1000));
     printf("Improvement = %f\n", (float)theo_et*1000/(float)et);
@@ -150,7 +174,7 @@ __m256d main() {
 
     // Dump the stage 1 outputs into csv files to display the images
     for (int i = 0 ; i < out_r ; i++) {
-        for (int j = 0 ; j < out_c ; j ++) {
+        for (int j = 0 ; j < out_c ; j++) {
             //printf("%lf ", result[i*out_c + j]);
             if (j != (out_c - 1)) {
                 sprintf(out_str, "%d, ", (int)result[i*out_c + j]);
@@ -174,38 +198,79 @@ __m256d main() {
     fclose(fpo);
     fclose(fpto);
 
-    // Dump the stage 2 outputs into csv files to display the images
+    // Dump the stage 2 and final outputs into csv files to display the images
     fpox = fopen("./outputx.csv", "w+");
     fpoy = fopen("./outputy.csv", "w+");
     fptox = fopen("./output_theox.csv", "w+");
     fptoy = fopen("./output_theoy.csv", "w+");
+    fptotheta = fopen("./output_theta.csv", "w+");
+    fptothetanewtemp = fopen("./output_theta_new_temp.csv", "w+");
+    fptodnew = fopen("./output_dnew.csv", "w+");
+    fptodnewtemp = fopen("./output_dnew_temp.csv", "w+");
+    fptodest = fopen("./output_final.csv", "w+");
     for (int i = 0 ; i < out_r - 2 ; i++) {
         for (int j = 0 ; j < out_c ; j ++) {
             if (j != (out_c - 1)) {
-                sprintf(out_str, "%d, ", (int)resultx[i*out_c + j]);
+                sprintf(out_str, "%d, ", (int)result_x[i*out_c + j]);
                 fputs(out_str, fpox);
-                sprintf(out_str, "%d, ", (int)resulty[i*out_c + j]);
+                sprintf(out_str, "%d, ", (int)result_y[i*out_c + j]);
+                //sprintf(out_str, "%d, ", (int)D[i*out_c + j]);
                 fputs(out_str, fpoy);
                 sprintf(out_str, "%d, ", (int)theo_resultx[i*out_c + j]);
                 fputs(out_str, fptox);
                 sprintf(out_str, "%d, ", (int)theo_resulty[i*out_c + j]);
                 fputs(out_str, fptoy);
+                sprintf(out_str, "%d, ", (int)Theta[i*out_c + j]);
+                fputs(out_str, fptotheta);
+                sprintf(out_str, "%d, ", (int)theta_new_temp[i][j]);
+                fputs(out_str, fptothetanewtemp);
+                sprintf(out_str, "%d, ", (int)D_new[i][j]);
+                fputs(out_str, fptodnew);
+                sprintf(out_str, "%d, ", (int)D_new_temp[i][j]);
+                fputs(out_str, fptodnewtemp);
+                sprintf(out_str, "%d, ", (int)dest[i][j]);
+                fputs(out_str, fptodest);
             } else {
-                sprintf(out_str, "%d", (int)resultx[i*out_c + j]);
+                //Dont put comma on the last line
+                sprintf(out_str, "%d", (int)result_x[i*out_c + j]);
                 fputs(out_str, fpox);
-                sprintf(out_str, "%d", (int)resulty[i*out_c + j]);
+                //sprintf(out_str, "%d", (int)result_y[i*out_c + j]);
+                sprintf(out_str, "%d", (int)D[i*out_c + j]);
                 fputs(out_str, fpoy);
                 sprintf(out_str, "%d", (int)theo_resultx[i*out_c + j]);
                 fputs(out_str, fptox);
                 sprintf(out_str, "%d", (int)theo_resulty[i*out_c + j]);
                 fputs(out_str, fptoy);
+                sprintf(out_str, "%d ", (int)Theta[i*out_c + j]);
+                fputs(out_str, fptotheta);
+                sprintf(out_str, "%d ", (int)theta_new_temp[i][j]);
+                fputs(out_str, fptothetanewtemp);
+                sprintf(out_str, "%d ", (int)D_new[i][j]);
+                fputs(out_str, fptodnew);
+                sprintf(out_str, "%d ", (int)D_new_temp[i][j]);
+                fputs(out_str, fptodnewtemp);
+                sprintf(out_str, "%d ", (int)dest[i][j]);
+                fputs(out_str, fptodest);
+ 
             }
         }
         fputc('\n',fptox);
         fputc('\n',fptoy);
         fputc('\n',fpox);
         fputc('\n',fpoy);
+        fputc('\n',fptotheta);
+        fputc('\n',fptothetanewtemp);
+        fputc('\n',fptodnew);
+        fputc('\n',fptodnewtemp);
+        fputc('\n',fptodest);
     }
     fclose(fptox);
     fclose(fptoy);
+    fclose(fpox);
+    fclose(fpoy);
+    fclose(fptotheta);
+    fclose(fptothetanewtemp);
+    fclose(fptodnew);
+    fclose(fptodnewtemp);
+    fclose(fptodest);
  }

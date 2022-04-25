@@ -33,23 +33,31 @@ int main(int argc, char* argv[]) {
     image1 = imread(argv[1]);
     cvtColor(image1,image2, CV_BGR2GRAY);
 
-    CvMLData mldata, mldatax, mldatay;
+    CvMLData mldata, mldatax, mldatay, mldatafinal;
     mldata.read_csv("output.csv");
     mldatax.read_csv("outputx.csv");
     mldatay.read_csv("outputy.csv");
+    mldatafinal.read_csv("output_dnew.csv");
+
     const CvMat* tmp = mldata.get_values();
     const CvMat* tmpx = mldatax.get_values();
     const CvMat* tmpy = mldatay.get_values();
+    const CvMat* tmpfinal = mldatafinal.get_values();
+
     Mat img(tmp, true);
     Mat imgx(tmpx, true);
     Mat imgy(tmpy, true);
+    Mat imgfinal(tmpfinal, true);
 
     img.convertTo(img, CV_8UC3);
     imgx.convertTo(imgx, CV_8UC3);
     imgy.convertTo(imgy, CV_8UC3);
+    imgfinal.convertTo(imgfinal, CV_8UC3);
+
     img = img.reshape(1);
     imgx = imgx.reshape(1);
     imgy = imgy.reshape(1);
+    imgfinal = imgfinal.reshape(1);
 
     //resize(img, final_img , Size(image2.cols - 2, image2.rows - 2), INTER_LINEAR);
     imshow("Orig", image2);
@@ -58,6 +66,7 @@ int main(int argc, char* argv[]) {
     imshow("img", img);
     imshow("imgx", imgx);
     imshow("imgy", imgy);
+    //imshow("imgfinal", imgfinal);
     waitKey(0);
     destroyWindow("img");
     /*//imwrite(filename, image2);

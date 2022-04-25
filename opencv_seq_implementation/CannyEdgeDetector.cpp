@@ -251,7 +251,7 @@ void CannyEdgeDetector::detect() {
 
 	//Step 4: Hysteresis Thresholding
 	Scalar meanValue = mean(D, thresh);
-    cout << "The sum is " << meanValue[0]<< endl;
+    cout << "The meanValue is " << meanValue[0]<< endl;
 	float thigh = meanValue[0];
 	float tlow = thigh / 2;
 

@@ -6,7 +6,8 @@ compile :
 run :
 	./image_read.x $(image)
 	./conv_kernel_2_stages.x
-	./image_write.x $(image)
+	#./image_write.x $(image)
+	python show_image.py
 clean :
 	rm -rf *.x *.csv
 
