@@ -19,10 +19,24 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
     for(int r = 0; r < rows; r++) {
         for(int c = 0; c < cols; c++) {
             D_new_temp[r][c] = D[r*cols + c];
+        }
+    }
+    for(int r = 0; r < rows; r++) {
+        for(int c = 0; c < cols; c++) {
             theta_new_temp[r][c] = Theta[r*cols + c];
         }
     }
-
+    int theta_counter = 0;
+    for(int r = 0; r < rows; r++) {
+        for(int c = 0; c < cols; c++) {
+            if((int)theta_new_temp[r][c] != (int)Theta[r*cols + c]){
+                //printf("[CED_345]: theta_new_temp[%d][%d] = %f\t Theta = %f\n", r, c, theta_new_temp[r][c], Theta[r*cols+c]);
+                theta_counter++;
+            }
+        }
+    }
+    printf("Changes in theta values = %d\n", theta_counter);
+    
     
     //Non-Maximum suppression
     for(int i = 0; i < rows; i++) {
@@ -56,8 +70,8 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
                    o o o 
                    - - -  
                 */   
-               if((D_new_temp[i+1][j+1] > D_new_temp[i+2][j+2]) 
-                     && D_new_temp[i+1][j+1] > D_new_temp[i][j]) {
+               if((D_new_temp[i+1][j+1] > D_new_temp[i+1][j+2]) 
+                     && D_new_temp[i+1][j+1] > D_new_temp[i+1][j]) {
                         thresh[i+1][j+1] = 255;
                         D_new[i+1][j+1] = D_new_temp[i+1][j+1];
                     }
@@ -88,14 +102,16 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
     
     // TODO: Use openMP to parallelize the mean finding
     // Mean value
-    for(int i = 0; i < rows; i++) {
-        for(int j = 0; j < cols; j++) {
-           sum += D_new[i][j];
-        }
-    }
-    float meanValue = (float)(sum/(float)(rows*cols));
-    float t_high = meanValue;
-    float t_low = t_high/2;
+    //for(int i = 0; i < rows; i++) {
+    //    for(int j = 0; j < cols; j++) {
+    //       sum += D_new[i][j];
+    //    }
+    //}
+    //float meanValue = (float)(sum/(float)(rows*cols));
+    //float t_high = meanValue;
+    //float t_low = t_high/2;
+    float t_high = 200;
+    float t_low = t_high/2.3;
 
     // Check for continuity
     for(int i = 0; i < rows; i++) {
@@ -112,7 +128,7 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
                         if (k == 1 && l == 1){
                             continue;
                         } else if(D_new[i+k][j+l] > t_high) {
-                            D_new[i][j] = 255;
+                            dest[i][j] = 255;
                         } 
                     }
                 }

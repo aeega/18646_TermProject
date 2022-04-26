@@ -28,7 +28,7 @@ __m256d main() {
 
     // Extract num rows and cols 
     char *str = (char*)malloc(20* sizeof(char));
-    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy, *fptotheta, *fptothetanewtemp, *fptodnew, *fptodnewtemp, *fptodest;
+    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy, *fptotheta, *fptothetanewtemp, *fptod, *fptodnew, *fptodnewtemp, *fptothresh, *fptodest;
     fp = fopen("./test.csv", "r");
     char ch;
     int s = 0;
@@ -47,20 +47,28 @@ __m256d main() {
     result_x = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     result_y = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    D_new = malloc(out_c *sizeof(float *));
-    D_new_temp = malloc(out_c *sizeof(float *));
-    theta_new_temp = malloc(out_c *sizeof(float *));
-    thresh = malloc(out_c *sizeof(float *));
-    dest = malloc(out_c *sizeof(float *));
-    dest_1D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    for (int i=0;i<out_c;i++) {
-        D_new[i] = malloc((out_r-2)*sizeof(float));
-        D_new_temp[i] = malloc((out_r-2)*sizeof(float));
-        theta_new_temp[i] = malloc((out_r-2)*sizeof(float));
-        thresh[i] = malloc((out_r-2)*sizeof(float));
-        dest[i] = malloc((out_r-2)*sizeof(float));
-    }
     Theta = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
+    D_new_temp = malloc(out_c *sizeof(float *));
+    for (int i=0;i<out_c;i++) {
+        D_new_temp[i] = (float *)malloc((out_r-2)*sizeof(float));
+    }
+    D_new = malloc(out_c *sizeof(float *));
+    for (int i=0;i<out_c;i++) {
+        D_new[i] = (float *)malloc((out_r-2)*sizeof(float));
+    }
+    theta_new_temp = malloc(out_c *sizeof(float *));
+    for (int i=0;i<out_c;i++) {
+        theta_new_temp[i] = (float *)malloc((out_r-2)*sizeof(float));
+    }
+    thresh = malloc(out_c *sizeof(float *));
+    for (int i=0;i<out_c;i++) {
+        thresh[i] = (float *)malloc((out_r-2)*sizeof(float));
+    }
+    dest = malloc(out_c *sizeof(float *));
+    for (int i=0;i<out_c;i++) {
+        dest[i] = (float *)malloc((out_r-2)*sizeof(float));
+    }
+    dest_1D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     //resultx_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     //resulty_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     theo_result = (float*)malloc(sizeof(float)*out_r*out_c);
@@ -199,22 +207,28 @@ __m256d main() {
     fclose(fpto);
 
     // Dump the stage 2 and final outputs into csv files to display the images
-    fpox = fopen("./outputx.csv", "w+");
-    fpoy = fopen("./outputy.csv", "w+");
+    fpox = fopen("./output_x.csv", "w+");
+    fpoy = fopen("./output_y.csv", "w+");
     fptox = fopen("./output_theox.csv", "w+");
     fptoy = fopen("./output_theoy.csv", "w+");
     fptotheta = fopen("./output_theta.csv", "w+");
     fptothetanewtemp = fopen("./output_theta_new_temp.csv", "w+");
+    fptod = fopen("./output_d.csv", "w+");
     fptodnew = fopen("./output_dnew.csv", "w+");
     fptodnewtemp = fopen("./output_dnew_temp.csv", "w+");
+    fptothresh = fopen("./output_thresh.csv", "w+");
     fptodest = fopen("./output_final.csv", "w+");
+    int D_counter = 0;
     for (int i = 0 ; i < out_r - 2 ; i++) {
         for (int j = 0 ; j < out_c ; j ++) {
+            if((int)D_new_temp[i][j] != (int)D[i*out_c + j]){
+                //printf("D_new_temp[%d][%d] = %f\t D = %f\n", i, j, D_new_temp[i][j], D[i*out_c+j]);
+                D_counter++;
+            }
             if (j != (out_c - 1)) {
                 sprintf(out_str, "%d, ", (int)result_x[i*out_c + j]);
                 fputs(out_str, fpox);
                 sprintf(out_str, "%d, ", (int)result_y[i*out_c + j]);
-                //sprintf(out_str, "%d, ", (int)D[i*out_c + j]);
                 fputs(out_str, fpoy);
                 sprintf(out_str, "%d, ", (int)theo_resultx[i*out_c + j]);
                 fputs(out_str, fptox);
@@ -224,18 +238,21 @@ __m256d main() {
                 fputs(out_str, fptotheta);
                 sprintf(out_str, "%d, ", (int)theta_new_temp[i][j]);
                 fputs(out_str, fptothetanewtemp);
+                sprintf(out_str, "%d, ", (int)D[i*out_c + j]);
+                fputs(out_str, fptod);
                 sprintf(out_str, "%d, ", (int)D_new[i][j]);
                 fputs(out_str, fptodnew);
                 sprintf(out_str, "%d, ", (int)D_new_temp[i][j]);
                 fputs(out_str, fptodnewtemp);
+                sprintf(out_str, "%d, ", (int)thresh[i][j]);
+                fputs(out_str, fptothresh);
                 sprintf(out_str, "%d, ", (int)dest[i][j]);
                 fputs(out_str, fptodest);
             } else {
                 //Dont put comma on the last line
                 sprintf(out_str, "%d", (int)result_x[i*out_c + j]);
                 fputs(out_str, fpox);
-                //sprintf(out_str, "%d", (int)result_y[i*out_c + j]);
-                sprintf(out_str, "%d", (int)D[i*out_c + j]);
+                sprintf(out_str, "%d", (int)result_y[i*out_c + j]);
                 fputs(out_str, fpoy);
                 sprintf(out_str, "%d", (int)theo_resultx[i*out_c + j]);
                 fputs(out_str, fptox);
@@ -245,10 +262,14 @@ __m256d main() {
                 fputs(out_str, fptotheta);
                 sprintf(out_str, "%d ", (int)theta_new_temp[i][j]);
                 fputs(out_str, fptothetanewtemp);
+                sprintf(out_str, "%d ", (int)D[i*out_c + j]);
+                fputs(out_str, fptod);
                 sprintf(out_str, "%d ", (int)D_new[i][j]);
                 fputs(out_str, fptodnew);
                 sprintf(out_str, "%d ", (int)D_new_temp[i][j]);
                 fputs(out_str, fptodnewtemp);
+                sprintf(out_str, "%d ", (int)thresh[i][j]);
+                fputs(out_str, fptothresh);
                 sprintf(out_str, "%d ", (int)dest[i][j]);
                 fputs(out_str, fptodest);
  
@@ -260,17 +281,47 @@ __m256d main() {
         fputc('\n',fpoy);
         fputc('\n',fptotheta);
         fputc('\n',fptothetanewtemp);
+        fputc('\n',fptod);
         fputc('\n',fptodnew);
         fputc('\n',fptodnewtemp);
+        fputc('\n',fptothresh);
         fputc('\n',fptodest);
     }
+    printf("Changes in D values = %d\n", D_counter);
     fclose(fptox);
     fclose(fptoy);
     fclose(fpox);
     fclose(fpoy);
     fclose(fptotheta);
     fclose(fptothetanewtemp);
+    fclose(fptod);
     fclose(fptodnew);
     fclose(fptodnewtemp);
+    fclose(fptothresh);
     fclose(fptodest);
+
+    // Free the malloced space
+    free(temp);
+    free(tempx);
+    free(tempy);
+    free(result);
+    free(result_x);
+    free(result_y);
+    free(D);
+    free(dest_1D);
+    free(Theta);
+    free(theo_result);
+    free(theo_resultx);
+    free(theo_resulty);
+    //for(int j = 0; j < out_c; j++) {free(D_new_temp[j]);}
+    //free(D_new_temp);
+    //for(int i = 0; i < out_c; i++) free(D_new[i]);
+    //free(D_new);
+    //for(int i = 0; i < out_c; i++) free(theta_new_temp[i]);
+    //free(theta_new_temp);
+    //for(int i = 0; i < out_c; i++) free(thresh[i]);
+    //free(thresh);
+    //for(int i = 0; i < out_c; i++) free(dest[i]);
+    //free(dest);
+    
  }

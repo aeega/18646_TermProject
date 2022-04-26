@@ -9,6 +9,6 @@ run :
 	#./image_write.x $(image)
 	python show_image.py
 clean :
-	rm -rf *.x *.csv
+	rm -rf *.x *.csv *.png
 
 all : clean compile run
