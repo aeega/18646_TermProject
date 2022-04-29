@@ -30,7 +30,7 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
     for(int r = 0; r < rows; r++) {
         for(int c = 0; c < cols; c++) {
             if((int)theta_new_temp[r][c] != (int)Theta[r*cols + c]){
-                //printf("[CED_345]: theta_new_temp[%d][%d] = %f\t Theta = %f\n", r, c, theta_new_temp[r][c], Theta[r*cols+c]);
+                printf("[CED_345]: theta_new_temp[%d][%d] = %f\t Theta = %f\n", r, c, theta_new_temp[r][c], Theta[r*cols+c]);
                 theta_counter++;
             }
         }
@@ -39,8 +39,8 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
     
     
     //Non-Maximum suppression
-    for(int i = 0; i < rows; i++) {
-        for(int j = 0; j < cols; j++) {
+    for(int i = 0; i < rows-2; i++) {
+        for(int j = 0; j < cols-2; j++) {
             /* For each shift in the stride of 1 on rows and columns 
                - o - 
                - o - 
@@ -114,8 +114,8 @@ void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, fl
     float t_low = t_high/2.3;
 
     // Check for continuity
-    for(int i = 0; i < rows; i++) {
-        for(int j = 0; j < cols; j++) {
+    for(int i = 0; i < rows-1; i++) {
+        for(int j = 0; j < cols-1; j++) {
             // Check the center to decide 
             if(D_new[i+1][j+1] > t_high) {
                 dest[i][j] = 255;

@@ -48,25 +48,25 @@ __m256d main() {
     result_y = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     Theta = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    D_new_temp = malloc(out_c *sizeof(float *));
-    for (int i=0;i<out_c;i++) {
-        D_new_temp[i] = (float *)malloc((out_r-2)*sizeof(float));
+    D_new_temp = malloc((out_r-2) *sizeof(float *));
+    for (int i=0;i<(out_r-2);i++) {
+        D_new_temp[i] = (float *)malloc((out_c)*sizeof(float));
     }
-    D_new = malloc(out_c *sizeof(float *));
-    for (int i=0;i<out_c;i++) {
-        D_new[i] = (float *)malloc((out_r-2)*sizeof(float));
+    D_new = malloc((out_r-2) *sizeof(float *));
+    for (int i=0;i<(out_r-2);i++) {
+        D_new[i] = (float *)malloc((out_c)*sizeof(float));
     }
-    theta_new_temp = malloc(out_c *sizeof(float *));
-    for (int i=0;i<out_c;i++) {
-        theta_new_temp[i] = (float *)malloc((out_r-2)*sizeof(float));
+    theta_new_temp = malloc((out_r-2) *sizeof(float *));
+    for (int i=0;i<(out_r-2);i++) {
+        theta_new_temp[i] = (float *)malloc((out_c)*sizeof(float));
     }
-    thresh = malloc(out_c *sizeof(float *));
-    for (int i=0;i<out_c;i++) {
-        thresh[i] = (float *)malloc((out_r-2)*sizeof(float));
+    thresh = malloc((out_r-2) *sizeof(float *));
+    for (int i=0;i<(out_r-2);i++) {
+        thresh[i] = (float *)malloc((out_c)*sizeof(float));
     }
-    dest = malloc(out_c *sizeof(float *));
-    for (int i=0;i<out_c;i++) {
-        dest[i] = (float *)malloc((out_r-2)*sizeof(float));
+    dest = malloc((out_r-2) *sizeof(float *));
+    for (int i=0;i<(out_r-2);i++) {
+        dest[i] = (float *)malloc((out_c)*sizeof(float));
     }
     dest_1D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     //resultx_ae = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
