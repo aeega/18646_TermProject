@@ -266,6 +266,19 @@ __m256d main() {
     fclose(fptodest);
 
     // Free the malloced space
+    for(int i = 0; i < (out_r-2); i++) {
+        free(D_new[i]);
+    }
+    free(D_new);
+    for(int i = 0; i < (out_r-2); i++) {
+        free(thresh[i]);
+    }
+    free(thresh);
+    for(int i = 0; i < (out_r-2); i++) {
+        free(dest[i]);
+    }
+    free(dest);
+
     free(temp);
     free(tempx);
     free(tempy);
@@ -278,14 +291,4 @@ __m256d main() {
     free(theo_result);
     free(theo_resultx);
     free(theo_resulty);
-    //for(int i = 0; i < (out_r-2); i++) {
-    //    printf("bad free %d\n", i);
-    //    free(D_new[i]);
-    //}
-    //free(D_new);
-    //for(int i = 0; i < (out_r-2); i++) free(thresh[i]);
-    //free(thresh);
-    //for(int i = 0; i < (out_r-2); i++) free(dest[i]);
-    //free(dest);
-    
  }
