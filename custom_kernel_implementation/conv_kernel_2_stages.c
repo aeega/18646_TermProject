@@ -13,22 +13,15 @@
 #include "conv2.c"
 #include "ced_stages345.c"
 
-//unsigned long long rdtsc() {   
-//    unsigned long long int x;   
-//    unsigned a, d;   
-//    __asm__ volatile("rdtsc" : "=a" (a), "=d" (d));
-//    return ((unsigned long long)a) | (((unsigned long long)d) << 32); 
-//}
-
 __m256d main() {
 
-    float *a, *result, *result_x, *result_y, *D, **D_new, **D_new_temp, *Theta, **theta_new_temp, **thresh, **dest, *resultx_ae, *resulty_ae, *theo_result, *theo_resultx, *theo_resulty, *dest_1D;
+    float *a, *result, *result_x, *result_y, *D, **D_new, *Theta, **thresh, **dest, *resultx_ae, *resulty_ae, *theo_result, *theo_resultx, *theo_resulty, *dest_1D;
     unsigned long long theo_st, theo_et, st, et;
     int i, j;
 
     // Extract num rows and cols 
     char *str = (char*)malloc(20* sizeof(char));
-    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy, *fptotheta, *fptothetanewtemp, *fptod, *fptodnew, *fptodnewtemp, *fptothresh, *fptodest;
+    FILE *fp, *fpo, *fpto, *fpi, *fptox, *fptoy, *fpox, *fpoy, *fptotheta, *fptod, *fptodnew, *fptothresh, *fptodest;
     fp = fopen("./test.csv", "r");
     char ch;
     int s = 0;
@@ -48,17 +41,9 @@ __m256d main() {
     result_y = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     D = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
     Theta = (float*)malloc(sizeof(float)*(out_r-2)*out_c);
-    D_new_temp = malloc((out_r-2) *sizeof(float *));
-    for (int i=0;i<(out_r-2);i++) {
-        D_new_temp[i] = (float *)malloc((out_c)*sizeof(float));
-    }
     D_new = malloc((out_r-2) *sizeof(float *));
     for (int i=0;i<(out_r-2);i++) {
         D_new[i] = (float *)malloc((out_c)*sizeof(float));
-    }
-    theta_new_temp = malloc((out_r-2) *sizeof(float *));
-    for (int i=0;i<(out_r-2);i++) {
-        theta_new_temp[i] = (float *)malloc((out_c)*sizeof(float));
     }
     thresh = malloc((out_r-2) *sizeof(float *));
     for (int i=0;i<(out_r-2);i++) {
@@ -161,7 +146,7 @@ __m256d main() {
     for(int i = 0; i < 1; i++ ) {
         conv (a, f, in_r-2, result, temp); 
         conv2 (result, fx, fy, in_r-4, out_c, result_x, result_y, D, Theta, tempx, tempy);
-        ced_stages345(dest, D_new, D_new_temp, D, thresh, theta_new_temp, Theta, in_r-4, out_c);
+        ced_stages345(dest, D_new, D, thresh, Theta, in_r-4, out_c);
     }
     et = rdtsc() - st;
     
@@ -212,19 +197,12 @@ __m256d main() {
     fptox = fopen("./output_theox.csv", "w+");
     fptoy = fopen("./output_theoy.csv", "w+");
     fptotheta = fopen("./output_theta.csv", "w+");
-    fptothetanewtemp = fopen("./output_theta_new_temp.csv", "w+");
     fptod = fopen("./output_d.csv", "w+");
     fptodnew = fopen("./output_dnew.csv", "w+");
-    fptodnewtemp = fopen("./output_dnew_temp.csv", "w+");
     fptothresh = fopen("./output_thresh.csv", "w+");
     fptodest = fopen("./output_final.csv", "w+");
-    int D_counter = 0;
     for (int i = 0 ; i < out_r - 2 ; i++) {
         for (int j = 0 ; j < out_c ; j ++) {
-            if((int)D_new_temp[i][j] != (int)D[i*out_c + j]){
-                //printf("D_new_temp[%d][%d] = %f\t D = %f\n", i, j, D_new_temp[i][j], D[i*out_c+j]);
-                D_counter++;
-            }
             if (j != (out_c - 1)) {
                 sprintf(out_str, "%d, ", (int)result_x[i*out_c + j]);
                 fputs(out_str, fpox);
@@ -236,14 +214,10 @@ __m256d main() {
                 fputs(out_str, fptoy);
                 sprintf(out_str, "%d, ", (int)Theta[i*out_c + j]);
                 fputs(out_str, fptotheta);
-                sprintf(out_str, "%d, ", (int)theta_new_temp[i][j]);
-                fputs(out_str, fptothetanewtemp);
                 sprintf(out_str, "%d, ", (int)D[i*out_c + j]);
                 fputs(out_str, fptod);
                 sprintf(out_str, "%d, ", (int)D_new[i][j]);
                 fputs(out_str, fptodnew);
-                sprintf(out_str, "%d, ", (int)D_new_temp[i][j]);
-                fputs(out_str, fptodnewtemp);
                 sprintf(out_str, "%d, ", (int)thresh[i][j]);
                 fputs(out_str, fptothresh);
                 sprintf(out_str, "%d, ", (int)dest[i][j]);
@@ -260,14 +234,10 @@ __m256d main() {
                 fputs(out_str, fptoy);
                 sprintf(out_str, "%d ", (int)Theta[i*out_c + j]);
                 fputs(out_str, fptotheta);
-                sprintf(out_str, "%d ", (int)theta_new_temp[i][j]);
-                fputs(out_str, fptothetanewtemp);
                 sprintf(out_str, "%d ", (int)D[i*out_c + j]);
                 fputs(out_str, fptod);
                 sprintf(out_str, "%d ", (int)D_new[i][j]);
                 fputs(out_str, fptodnew);
-                sprintf(out_str, "%d ", (int)D_new_temp[i][j]);
-                fputs(out_str, fptodnewtemp);
                 sprintf(out_str, "%d ", (int)thresh[i][j]);
                 fputs(out_str, fptothresh);
                 sprintf(out_str, "%d ", (int)dest[i][j]);
@@ -280,23 +250,18 @@ __m256d main() {
         fputc('\n',fpox);
         fputc('\n',fpoy);
         fputc('\n',fptotheta);
-        fputc('\n',fptothetanewtemp);
         fputc('\n',fptod);
         fputc('\n',fptodnew);
-        fputc('\n',fptodnewtemp);
         fputc('\n',fptothresh);
         fputc('\n',fptodest);
     }
-    printf("Changes in D values = %d\n", D_counter);
     fclose(fptox);
     fclose(fptoy);
     fclose(fpox);
     fclose(fpoy);
     fclose(fptotheta);
-    fclose(fptothetanewtemp);
     fclose(fptod);
     fclose(fptodnew);
-    fclose(fptodnewtemp);
     fclose(fptothresh);
     fclose(fptodest);
 
@@ -313,15 +278,14 @@ __m256d main() {
     free(theo_result);
     free(theo_resultx);
     free(theo_resulty);
-    //for(int j = 0; j < out_c; j++) {free(D_new_temp[j]);}
-    //free(D_new_temp);
-    //for(int i = 0; i < out_c; i++) free(D_new[i]);
+    //for(int i = 0; i < (out_r-2); i++) {
+    //    printf("bad free %d\n", i);
+    //    free(D_new[i]);
+    //}
     //free(D_new);
-    //for(int i = 0; i < out_c; i++) free(theta_new_temp[i]);
-    //free(theta_new_temp);
-    //for(int i = 0; i < out_c; i++) free(thresh[i]);
+    //for(int i = 0; i < (out_r-2); i++) free(thresh[i]);
     //free(thresh);
-    //for(int i = 0; i < out_c; i++) free(dest[i]);
+    //for(int i = 0; i < (out_r-2); i++) free(dest[i]);
     //free(dest);
     
  }
