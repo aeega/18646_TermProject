@@ -12,4 +12,3 @@ clean :
 	rm -rf *.x *.csv *.png
 
 all : clean compile run
-
