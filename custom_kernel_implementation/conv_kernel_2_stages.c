@@ -13,10 +13,12 @@
 #include "conv2.c"
 #include "ced_stages345.c"
 
+#define AVERAGED 1000
+
 __m256d main() {
 
     float *a, *result, *result_x, *result_y, *D, **D_new, *Theta, **thresh, **dest, *resultx_ae, *resulty_ae, *theo_result, *theo_resultx, *theo_resulty, *dest_1D;
-    unsigned long long theo_st, theo_et, st, et;
+    unsigned long long theo_st, theo_et, st, et, st2, et2;
     int i, j;
 
     // Extract num rows and cols 
@@ -140,15 +142,22 @@ __m256d main() {
     printf("Theoretical time taken: %lld\n", theo_et);
 
 
-    st = rdtsc();
 
    // Custom kernel implementation 
-    for(int i = 0; i < 1; i++ ) {
+    st = rdtsc();
+    for(int i = 0; i < AVERAGED; i++ ) {
         conv (a, f, in_r-2, result, temp); 
-        conv2 (result, fx, fy, in_r-4, out_c, result_x, result_y, D, Theta, tempx, tempy);
-        ced_stages345(dest, D_new, D, thresh, Theta, in_r-4, out_c);
     }
     et = rdtsc() - st;
+    printf("[Custom]: Time for stage 1: %lld\n", ((et)/AVERAGED));
+
+    st2 = rdtsc();
+    for(int i = 0; i < AVERAGED; i++ ) {
+        conv2 (result, fx, fy, in_r-4, out_c, result_x, result_y, D, Theta, tempx, tempy);
+    }
+    et2 = rdtsc() - st2;
+    printf("[Custom]: Time for stage 2: %lld\n", (et2/AVERAGED));
+    ced_stages345(dest, D_new, D, thresh, Theta, in_r-4, out_c);
     
     // Convert the dest[][] to dest_1D[] to print the image
     for(int i = 0; i < (out_r-2); i++) {
@@ -157,8 +166,7 @@ __m256d main() {
         }
     }
 
-    printf("Observed avg time taken over 1000 iter Total: %lld\n", ((et)/1000));
-    printf("Improvement = %f\n", (float)theo_et*1000/(float)et);
+    printf("Improvement = %f\n", (float)theo_et*1000/(float)(et + et));
 
 
     fpo = fopen("./output.csv", "w+");

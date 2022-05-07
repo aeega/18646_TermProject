@@ -18,8 +18,11 @@
 #include <x86intrin.h>
 #include <immintrin.h>
 
-float total_time = 0;
-float total_time2 = 0;
+unsigned long long total_time = 0;
+unsigned long long total_time2 = 0;
+unsigned long long total_time3 = 0;
+unsigned long long total_time4 = 0;
+unsigned long long total_time5 = 0;
 int counter = 0;
 CannyEdgeDetector::CannyEdgeDetector() {
 	// TODO Auto-generated constructor stub
@@ -90,8 +93,11 @@ void CannyEdgeDetector::detect() {
 	int DyKernel[3][3] = { { 1, 2, 1 }, { 0, 0, 0 }, { -1, -2, -1 } };
     printf("ImgGray.rows = %d\n", imgGray.rows);
     printf("ImgGray.cols = %d\n", imgGray.cols);
-    uint32_t et = 0, st= 0;
-    uint32_t et2 = 0, st2 = 0;
+    unsigned long long et = 0, st= 0;
+    unsigned long long et2 = 0, st2 = 0;
+    unsigned long long et3 = 0, st3 = 0;
+    unsigned long long et4 = 0, st4 = 0;
+    unsigned long long et5 = 0, st5 = 0;
     st = _rdtsc();
 
 	//Step 1: Noise Reduction
@@ -158,8 +164,6 @@ void CannyEdgeDetector::detect() {
 							m);
 				}
 			}
-    et2 = _rdtsc() - st2;
-    total_time2 = total_time2 + et2;
 
             Dx.at<int>(i + 1, j + 1) = windowImagex_ij.at<int>(1, 1);
 			Dy.at<int>(i + 1, j + 1) = windowImagey_ij.at<int>(1, 1);
@@ -192,6 +196,8 @@ void CannyEdgeDetector::detect() {
 			}
 		}
 	}
+    et2 = _rdtsc() - st2;
+    total_time2 = total_time2 + et2;
 
     //DBG_PRINTS
     //printf("Total time = %f\n avg exec time = %f\n", (float)total_time2, (float)total_time2/counter);
@@ -199,7 +205,7 @@ void CannyEdgeDetector::detect() {
     
     printf("Total cycles taken for two stages  = %f\n", ((float)total_time + (float)total_time2)/counter);
 	//Step 3: Non-Maximum Surpression
-
+    st3 = _rdtsc();
 	for (int i = 0; i < rowBlocks3x; i++) {
 		for (int j = 0; j < colBlocks3x; j++) {
 			Mat windowImage_ij(D, Rect(j, i, BLOCK_SIZE3X, BLOCK_SIZE3X));
@@ -248,7 +254,10 @@ void CannyEdgeDetector::detect() {
 
 		}
 	}
+    et3 = _rdtsc() - st3;
+    total_time3 = total_time3 + et3;
 
+    st4 = _rdtsc();
 	//Step 4: Hysteresis Thresholding
 	Scalar meanValue = mean(D, thresh);
     cout << "The meanValue is " << meanValue[0]<< endl;
@@ -314,8 +323,16 @@ void CannyEdgeDetector::detect() {
 
 		}
 	}
-
+    et4 = _rdtsc() - st4;
+    total_time4 = total_time4 + et4;
+    printf("[SEQ]:Time for stage 1  = %lld\n", et/counter);
+    printf("[SEQ]:Time for stage 2  = %lld\n", et2);
+    printf("[SEQ]:Time for stage 3  = %lld\n", et3);
+    printf("[SEQ]:Time for stage4&5 = %lld\n", et4);
+    printf("[SEQ]:Total cycles taken for two stages  = %lld\n", (total_time + total_time2)/counter);
+    printf("[SEQ]:Total cycles taken for all stages sequential = %lld\n", (total_time + total_time2 + total_time3 + total_time4)/counter);
 }
+
 
 // With low and high thresholds
 //void CannyEdgeDetector::detect(int lowThreshold, int highThreshold) {

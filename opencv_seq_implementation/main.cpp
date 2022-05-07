@@ -26,7 +26,7 @@ int main(int, char** argv) {
 
 	  //result image of step 3
 	  imshow( "Threshold without Hysteresis", ced.thresh );
-	  imshow( "Dy", ced.Dy);
+	  //imshow( "Dy", ced.Dy);
 	  //grayscale of source image
 	  imshow( " Grayscale", ced.imgGray_copy);
 	  //imshow( " Grayscale_myversion", ced.imgGray_copy2);

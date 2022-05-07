@@ -4,8 +4,10 @@
  * * Created on   : Apr 05, 2022
  * * Description  : This is the 2st stage kernel design 
  * */
+//#include <omp.h>
 #define BLOCK_SIZE3x 3
 double sum = 0;
+unsigned long long st3, et3, st5, et5;
 
 //void ced_stages345(float **dest, float **D_new, float **D_new_temp, float *D, float **thresh, float **theta_new_temp, float *Theta, int rows, int cols){
 void ced_stages345(float **dest, float **D_new, float *D, float **thresh, float *Theta, int rows, int cols){
@@ -17,6 +19,11 @@ void ced_stages345(float **dest, float **D_new, float *D, float **thresh, float 
     printf("BADCOW\n");
 
     //Non-Maximum suppression
+    //#pragma omp num_threads(24)
+    //int total_threads = omp_get_num_threads();  
+    //int chunksize = (rows-2)*(cols-2)/ total_threads; 
+    st3 = rdtsc();
+    //#pragma omp parallel for schedule(dynamic,chunksize)
     for(int i = 0; i < rows-2; i++) {
         for(int j = 0; j < cols-2; j++) {
             /* For each shift in the stride of 1 on rows and columns 
@@ -67,6 +74,8 @@ void ced_stages345(float **dest, float **D_new, float *D, float **thresh, float 
             }
         } //j
     } //i
+    et3 = rdtsc() - st3;
+    printf("[Custom]: Time for stage 3: %lld\n", et3);
     
    //@TODO:REMOVE DEBUG PRINTS
    // for(int i=0;i<rows; i++){
@@ -92,6 +101,8 @@ void ced_stages345(float **dest, float **D_new, float *D, float **thresh, float 
     float t_low = t_high/2.3;
 
     // Check for continuity
+    st5 = rdtsc();
+    //#pragma omp parallel for schedule(dynamic,chunksize)
     for(int i = 0; i < rows-1; i++) {
         for(int j = 0; j < cols-1; j++) {
             // Check the center to decide 
@@ -114,4 +125,6 @@ void ced_stages345(float **dest, float **D_new, float *D, float **thresh, float 
         }
     } // end for
      
+    et5 = rdtsc() - st5;
+    printf("[Custom]: Time for stage 4&5: %lld\n", et5);
 }

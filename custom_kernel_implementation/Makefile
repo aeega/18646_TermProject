@@ -1,5 +1,5 @@
 compile : 
-	gcc conv_kernel_2_stages.c -std=c99 -mavx -mavx2 -mfma -lm -O3 -o conv_kernel_2_stages.x
+	gcc conv_kernel_2_stages.c -std=c99 -mavx -mavx2 -mfma -lm -O0 -o conv_kernel_2_stages.x
 	g++ image_read.cpp `pkg-config --cflags --libs opencv` -o image_read.x
 	g++ image_write.cpp `pkg-config --cflags --libs opencv` -o image_write.x
 
