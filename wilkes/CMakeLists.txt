@@ -1,2 +1,2 @@
 add_subdirectory(custom_kernel_implementation)
-#add_subdirectory(opencv_seq_implementation)
+add_subdirectory(opencv_seq_implementation)
