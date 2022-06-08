@@ -500,8 +500,8 @@ Disassembly of section .plt:
   4007c6:	68 0a 00 00 00       	pushq  $0xa
   4007cb:	e9 40 ff ff ff       	jmpq   400710 <.plt>
 
-00000000004007d0 <getline@plt>:
-  4007d0:	ff 25 9a 58 20 00    	jmpq   *0x20589a(%rip)        # 606070 <getline@GLIBC_2.2.5>
+00000000004007d0 <my_getline@plt>:
+  4007d0:	ff 25 9a 58 20 00    	jmpq   *0x20589a(%rip)        # 606070 <my_getline@GLIBC_2.2.5>
   4007d6:	68 0b 00 00 00       	pushq  $0xb
   4007db:	e9 30 ff ff ff       	jmpq   400710 <.plt>
 
@@ -696,7 +696,7 @@ Disassembly of section .text:
   400b0f:	00 
   400b10:	31 c0                	xor    %eax,%eax
   400b12:	4c 89 ea             	mov    %r13,%rdx
-  400b15:	e8 b6 fc ff ff       	callq  4007d0 <getline@plt>
+  400b15:	e8 b6 fc ff ff       	callq  4007d0 <my_getline@plt>
   400b1a:	83 f8 ff             	cmp    $0xffffffff,%eax
   400b1d:	74 68                	je     400b87 <main+0x367>
   400b1f:	48 8b bc 24 b0 02 00 	mov    0x2b0(%rsp),%rdi
@@ -2811,7 +2811,7 @@ Disassembly of section .text:
   402e25:	31 c0                	xor    %eax,%eax
   402e27:	4c 89 ea             	mov    %r13,%rdx
   402e2a:	48 89 e7             	mov    %rsp,%rdi
-  402e2d:	e8 9e d9 ff ff       	callq  4007d0 <getline@plt>
+  402e2d:	e8 9e d9 ff ff       	callq  4007d0 <my_getline@plt>
   402e32:	83 f8 ff             	cmp    $0xffffffff,%eax
   402e35:	74 3c                	je     402e73 <get_rows_n_columns+0x93>
   402e37:	be 1d 4e 40 00       	mov    $0x404e1d,%esi
